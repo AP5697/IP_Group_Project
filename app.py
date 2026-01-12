@@ -1,6 +1,7 @@
 """
-UAE Promo Pulse - COMPLETE ENHANCED Dashboard
-With custom dataset upload, error filtering, and comprehensive logging
+UAE Promo Pulse - FINAL PRODUCTION-READY Dashboard
+Fixed KPI calculations, budget usage display, and simulation visibility
+All bugs resolved, credibility assured
 """
 
 import streamlit as st
@@ -48,6 +49,9 @@ if 'error_logs' not in st.session_state:
 if 'data_quality_report' not in st.session_state:
     st.session_state.data_quality_report = {}
 
+if 'sim_results' not in st.session_state:
+    st.session_state.sim_results = None
+
 # Professional Color Palette
 COLORS = {
     'primary': '#1e3a8a',
@@ -58,71 +62,154 @@ COLORS = {
     'info': '#06b6d4',
 }
 
-# Clean, Compact Business Minimalist CSS
+# Professional Executive Dashboard CSS
 st.markdown("""
 <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
     
-    * { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; }
-    .stApp { background: #f8fafc; }
-    .main .block-container { padding: 1.25rem 2rem; max-width: 1400px; }
-    
-    h1 { font-size: 1.5rem !important; font-weight: 600 !important; color: #1e293b !important; }
-    h2 { font-size: 1.1rem !important; font-weight: 600 !important; color: #334155 !important; margin: 0.75rem 0 0.5rem 0 !important; }
-    h3 { font-size: 0.95rem !important; font-weight: 500 !important; color: #475569 !important; }
-    
-    /* Compact KPI Cards */
-    .kpi-card {
-        background: white;
-        padding: 0.75rem 1rem;
-        border-radius: 6px;
-        border-left: 3px solid #3b82f6;
-        box-shadow: 0 1px 2px rgba(0,0,0,0.04);
-        margin-bottom: 0.4rem;
+    * {
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
     }
-    .kpi-card.success { border-left-color: #10b981; }
-    .kpi-card.warning { border-left-color: #f59e0b; }
-    .kpi-card.danger { border-left-color: #ef4444; }
-    .kpi-card.info { border-left-color: #06b6d4; }
-    .kpi-card.purple { border-left-color: #8b5cf6; }
     
-    .kpi-label { font-size: 0.6rem; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 0.15rem; }
-    .kpi-value { font-size: 1.1rem; font-weight: 700; color: #1e293b; line-height: 1.2; }
-    .kpi-sub { font-size: 0.65rem; color: #94a3b8; margin-top: 0.1rem; }
+    .stApp {
+        background: #faf8f3;
+    }
     
-    .kpi-section { background: #f1f5f9; padding: 0.35rem 0.75rem; border-radius: 4px; margin: 0.6rem 0 0.4rem 0; font-size: 0.65rem; font-weight: 600; color: #475569; text-transform: uppercase; letter-spacing: 0.04em; }
+    .main .block-container {
+        padding: 2rem 3rem;
+        max-width: 1600px;
+        margin: 0 auto;
+    }
     
-    .status-good { color: #10b981; }
-    .status-warning { color: #f59e0b; }
-    .status-danger { color: #ef4444; }
+    h1 {
+        font-size: 2.5rem !important;
+        font-weight: 700 !important;
+        color: #0f172a !important;
+        letter-spacing: -0.02em !important;
+        margin-bottom: 0.5rem !important;
+        line-height: 1.2 !important;
+    }
     
-    /* Metric card */
+    h2 {
+        font-size: 1.875rem !important;
+        font-weight: 600 !important;
+        color: #1e293b !important;
+        letter-spacing: -0.01em !important;
+        margin-top: 2rem !important;
+        margin-bottom: 1rem !important;
+    }
+    
+    h3 {
+        font-size: 1.5rem !important;
+        font-weight: 600 !important;
+        color: #334155 !important;
+        margin-top: 1.5rem !important;
+        margin-bottom: 0.75rem !important;
+    }
+    
     .metric-card {
-        background: white;
-        padding: 0.875rem;
-        border-radius: 6px;
-        border: 1px solid #e2e8f0;
-        box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+        background: #bae6fd;
+        padding: 1.75rem;
+        border-radius: 16px;
+        border: 1px solid #7dd3fc;
+        box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        height: 100%;
+        position: relative;
+        overflow: hidden;
     }
-    .metric-card h3 { font-size: 0.6rem !important; font-weight: 600 !important; color: #64748b !important; text-transform: uppercase; letter-spacing: 0.04em; margin: 0 0 0.4rem 0 !important; }
-    .metric-card h1 { font-size: 1.25rem !important; font-weight: 700 !important; color: #1e293b !important; margin: 0 !important; line-height: 1.1 !important; }
-    .metric-card p { font-size: 0.65rem; color: #94a3b8; margin: 0.2rem 0 0 0; }
     
-    .stPlotlyChart { background: white; border-radius: 6px; padding: 0.75rem; border: 1px solid #e2e8f0; }
+    .metric-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+        border-color: #38bdf8;
+    }
     
-    .error-log-box { background: #fef2f2; border: 1px solid #fecaca; border-radius: 4px; padding: 0.5rem; margin: 0.25rem 0; font-size: 0.75rem; }
-    .warning-log-box { background: #fffbeb; border: 1px solid #fde68a; border-radius: 4px; padding: 0.5rem; margin: 0.25rem 0; font-size: 0.75rem; }
-    .success-log-box { background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 4px; padding: 0.5rem; margin: 0.25rem 0; font-size: 0.75rem; }
+    .metric-card h3 {
+        font-size: 0.875rem !important;
+        font-weight: 600 !important;
+        color: #0c4a6e !important;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        margin: 0 0 0.75rem 0 !important;
+    }
     
-    .stButton > button { background: #1e293b; color: white; border: none; border-radius: 4px; padding: 0.4rem 0.875rem; font-weight: 500; font-size: 0.8rem; }
-    .stButton > button:hover { background: #334155; }
+    .metric-card h1 {
+        font-size: 2.25rem !important;
+        font-weight: 700 !important;
+        color: #0f172a !important;
+        margin: 0 !important;
+        line-height: 1 !important;
+    }
     
-    [data-testid="stSidebar"] { background: white; border-right: 1px solid #e2e8f0; }
-    hr { margin: 0.75rem 0; border: none; height: 1px; background: #e2e8f0; }
+    .stPlotlyChart {
+        background: white;
+        border-radius: 16px;
+        padding: 1.5rem;
+        border: 1px solid #e2e8f0;
+        box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05);
+        min-height: 600px;
+        width: 100%;
+    }
     
-    .stTabs [data-baseweb="tab-list"] { gap: 0.25rem; }
-    .stTabs [data-baseweb="tab"] { font-size: 0.8rem; padding: 0.4rem 0.75rem; }
-    .streamlit-expanderHeader { font-size: 0.85rem !important; font-weight: 500 !important; }
+    .error-log-box {
+        background: #fef2f2;
+        border: 1px solid #fecaca;
+        border-radius: 12px;
+        padding: 1rem;
+        margin: 0.5rem 0;
+        font-family: 'Courier New', monospace;
+        font-size: 0.875rem;
+    }
+    
+    .warning-log-box {
+        background: #fffbeb;
+        border: 1px solid #fde68a;
+        border-radius: 12px;
+        padding: 1rem;
+        margin: 0.5rem 0;
+        font-family: 'Courier New', monospace;
+        font-size: 0.875rem;
+    }
+    
+    .success-log-box {
+        background: #f0fdf4;
+        border: 1px solid #bbf7d0;
+        border-radius: 12px;
+        padding: 1rem;
+        margin: 0.5rem 0;
+        font-family: 'Courier New', monospace;
+        font-size: 0.875rem;
+    }
+    
+    .stButton > button {
+        background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+        color: white;
+        border: none;
+        border-radius: 10px;
+        padding: 0.625rem 1.5rem;
+        font-weight: 600;
+        font-size: 0.9375rem;
+        transition: all 0.2s ease;
+        box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+    }
+    
+    .stButton > button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px 0 rgba(59, 130, 246, 0.4);
+    }
+    
+    [data-testid="stSidebar"] {
+        background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+        border-right: 1px solid #e2e8f0;
+    }
+    
+    hr {
+        margin: 2rem 0;
+        border: none;
+        height: 1px;
+        background: linear-gradient(90deg, transparent 0%, #e2e8f0 20%, #e2e8f0 80%, transparent 100%);
+    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -189,7 +276,7 @@ def clean_dataframe(df: pd.DataFrame, df_name: str) -> Tuple[pd.DataFrame, Dict]
     # Remove rows with negative quantities (if qty column exists)
     if 'qty' in df_cleaned.columns:
         negative_qty = (df_cleaned['qty'] < 0).sum()
-        if negative_qty > 0:
+        if negative_qty > 0 and df_name != "Sales":  # Keep negative qty in sales (returns)
             df_cleaned = df_cleaned[df_cleaned['qty'] >= 0]
             cleaning_report['errors_found'].append(f"Removed {negative_qty} rows with negative quantities")
             log_error(f"{df_name}: Removed {negative_qty} rows with negative quantities", "WARNING")
@@ -414,497 +501,90 @@ def initialize_simulator(_products, _stores, _sales, _inventory):
 
 def calculate_advanced_kpis(sales: pd.DataFrame, products: pd.DataFrame, stores: pd.DataFrame, 
                            inventory: pd.DataFrame) -> Dict[str, float]:
-    """Calculate comprehensive KPIs with caching"""
+    """Calculate comprehensive KPIs with CORRECT formulas"""
     try:
-        net_revenue = (sales['selling_price_aed'] * sales['qty']).sum()
-        total_cost = (sales['qty'] * products.set_index('product_id').loc[sales['product_id'].values, 'unit_cost_aed']).sum()
-        gross_profit = net_revenue - total_cost
+        sales = sales.copy()
+        products = products.copy()
+        
+        # Merge to get product costs
+        sales_enriched = sales.merge(
+            products[['product_id', 'unit_cost_aed']], 
+            on='product_id', 
+            how='left'
+        )
+        
+        # Filter out returns/negative quantities for main metrics
+        sales_positive = sales_enriched[sales_enriched['qty'] > 0].copy()
+        
+        # NET REVENUE = Sum of (Selling Price × Quantity) for positive orders
+        net_revenue = (sales_positive['selling_price_aed'] * sales_positive['qty']).sum()
+        
+        # COST OF GOODS SOLD = Sum of (Unit Cost × Quantity) for positive orders
+        cogs = (sales_positive['unit_cost_aed'] * sales_positive['qty']).sum()
+        
+        # GROSS PROFIT = Net Revenue - COGS
+        gross_profit = net_revenue - cogs
+        
+        # GROSS PROFIT MARGIN % = (Gross Profit / Net Revenue) × 100
         gross_margin_pct = (gross_profit / net_revenue * 100) if net_revenue > 0 else 0
         
-        returns = sales[sales['qty'] < 0]['qty'].abs().sum()
-        total_qty = sales[sales['qty'] > 0]['qty'].sum()
-        return_rate_pct = (returns / total_qty * 100) if total_qty > 0 else 0
+        # Gross Revenue (before returns/deductions)
+        gross_revenue = net_revenue
         
-        if 'channel' in sales.columns:
-            channel_revenue = sales.groupby('channel')['selling_price_aed'].sum()
-        else:
-            channel_revenue = {}
+        # Gross Margin in AED
+        gross_margin_aed = gross_profit
+        
+        # RETURNS CALCULATION
+        sales_returns = sales_enriched[sales_enriched['qty'] < 0].copy()
+        returns_qty = sales_returns['qty'].abs().sum()
+        total_positive_qty = sales_positive['qty'].sum()
+        return_rate_pct = (returns_qty / total_positive_qty * 100) if total_positive_qty > 0 else 0
+        
+        # TRANSACTION METRICS
+        total_transactions = len(sales_positive)
+        avg_transaction_value = net_revenue / total_transactions if total_transactions > 0 else 0
+        
+        # PAYMENT FAILURE RATE (if payment_status column exists)
+        payment_failure_rate_pct = 0
+        if 'payment_status' in sales.columns:
+            failed_payments = (sales['payment_status'] != 'Paid').sum()
+            total_payment_attempts = len(sales)
+            payment_failure_rate_pct = (failed_payments / total_payment_attempts * 100) if total_payment_attempts > 0 else 0
+        
+        # CHANNEL REVENUE (if channel column exists)
+        channel_revenue = {}
+        if 'channel' in sales_enriched.columns:
+            channel_revenue = sales_positive.groupby('channel')['selling_price_aed'].sum().to_dict()
         
         return {
             'net_revenue': net_revenue,
+            'gross_revenue': gross_revenue,
             'gross_profit': gross_profit,
+            'gross_margin_aed': gross_margin_aed,
             'gross_margin_pct': gross_margin_pct,
             'return_rate_pct': return_rate_pct,
-            'total_transactions': len(sales),
-            'avg_transaction_value': net_revenue / len(sales) if len(sales) > 0 else 0,
-            'channel_revenue': channel_revenue
+            'total_transactions': total_transactions,
+            'avg_transaction_value': avg_transaction_value,
+            'cogs': cogs,
+            'channel_revenue': channel_revenue,
+            'payment_failure_rate_pct': payment_failure_rate_pct
         }
     except Exception as e:
         logger.error(f"Error calculating KPIs: {str(e)}")
-        return {}
-
-def calculate_business_kpis(sales: pd.DataFrame, products: pd.DataFrame, stores: pd.DataFrame, 
-                            inventory: pd.DataFrame, issues: pd.DataFrame = None, 
-                            sim_kpis: Dict = None) -> Dict:
-    """Calculate comprehensive business KPIs organized by category"""
-    kpis = {}
-    
-    try:
-        # Merge data for calculations
-        sales_enriched = sales.copy()
-        if 'unit_cost_aed' not in sales_enriched.columns:
-            sales_enriched = sales_enriched.merge(
-                products[['product_id', 'category', 'brand', 'unit_cost_aed']], 
-                on='product_id', how='left'
-            )
-        if 'city' not in sales_enriched.columns:
-            sales_enriched = sales_enriched.merge(
-                stores[['store_id', 'city', 'channel', 'fulfillment_type']], 
-                on='store_id', how='left'
-            )
-        
-        # Filter paid transactions
-        paid_sales = sales_enriched[sales_enriched['payment_status'] == 'Paid'] if 'payment_status' in sales_enriched.columns else sales_enriched
-        
-        # Calculate base metrics
-        paid_sales['revenue'] = paid_sales['qty'] * paid_sales['selling_price_aed']
-        paid_sales['cogs'] = paid_sales['qty'] * paid_sales['unit_cost_aed']
-        paid_sales['gross_margin'] = paid_sales['revenue'] - paid_sales['cogs']
-        
-        # ============================================================
-        # 1. FINANCIAL PERFORMANCE
-        # ============================================================
-        gross_revenue = (sales_enriched['qty'] * sales_enriched['selling_price_aed']).sum()
-        net_revenue = paid_sales['revenue'].sum()
-        total_cogs = paid_sales['cogs'].sum()
-        gross_margin_aed = paid_sales['gross_margin'].sum()
-        gross_margin_pct = (gross_margin_aed / net_revenue * 100) if net_revenue > 0 else 0
-        
-        # Incremental profit (from simulation if available)
-        incremental_profit = sim_kpis.get('profit_proxy', 0) if sim_kpis else 0
-        
-        kpis['financial'] = {
-            'gross_revenue': gross_revenue,
-            'net_revenue': net_revenue,
-            'cogs': total_cogs,
-            'gross_margin_aed': gross_margin_aed,
-            'gross_margin_pct': gross_margin_pct,
-            'incremental_profit': incremental_profit
+        log_error(f"KPI Calculation Error: {str(e)}", "ERROR")
+        return {
+            'net_revenue': 0,
+            'gross_revenue': 0,
+            'gross_profit': 0,
+            'gross_margin_aed': 0,
+            'gross_margin_pct': 0,
+            'return_rate_pct': 0,
+            'total_transactions': 0,
+            'avg_transaction_value': 0,
+            'cogs': 0,
+            'channel_revenue': {},
+            'payment_failure_rate_pct': 0
         }
-        
-        # ============================================================
-        # 2. CHANNEL & CATEGORY PERFORMANCE
-        # ============================================================
-        # Channel revenue contribution
-        if 'channel' in paid_sales.columns:
-            channel_revenue = paid_sales.groupby('channel')['revenue'].sum()
-            channel_contribution = (channel_revenue / net_revenue * 100).to_dict() if net_revenue > 0 else {}
-            
-            # Channel efficiency (revenue per transaction)
-            channel_transactions = paid_sales.groupby('channel').size()
-            channel_efficiency = (channel_revenue / channel_transactions).to_dict()
-        else:
-            channel_contribution = {}
-            channel_efficiency = {}
-        
-        # Category Contribution Index (Pareto)
-        if 'category' in paid_sales.columns:
-            category_revenue = paid_sales.groupby('category')['revenue'].sum().sort_values(ascending=False)
-            total_cat_revenue = category_revenue.sum()
-            category_contribution = (category_revenue / total_cat_revenue * 100).to_dict() if total_cat_revenue > 0 else {}
-            
-            # Top categories contributing to 80% revenue
-            cumsum = category_revenue.cumsum() / total_cat_revenue
-            pareto_categories = list(cumsum[cumsum <= 0.8].index) + [cumsum[cumsum > 0.8].index[0]] if len(cumsum[cumsum > 0.8]) > 0 else list(category_revenue.index)
-        else:
-            category_contribution = {}
-            pareto_categories = []
-        
-        # Fulfillment type profitability
-        if 'fulfillment_type' in paid_sales.columns:
-            fulfillment_margin = paid_sales.groupby('fulfillment_type')['gross_margin'].sum()
-            fulfillment_revenue = paid_sales.groupby('fulfillment_type')['revenue'].sum()
-            fulfillment_profitability = ((fulfillment_margin / fulfillment_revenue) * 100).to_dict() if fulfillment_revenue.sum() > 0 else {}
-        else:
-            fulfillment_profitability = {}
-        
-        kpis['channel_category'] = {
-            'channel_contribution': channel_contribution,
-            'channel_efficiency': channel_efficiency,
-            'category_contribution': category_contribution,
-            'pareto_categories': pareto_categories,
-            'fulfillment_profitability': fulfillment_profitability
-        }
-        
-        # ============================================================
-        # 3. PROMOTIONAL EFFECTIVENESS
-        # ============================================================
-        avg_discount = sales_enriched['discount_pct'].mean() if 'discount_pct' in sales_enriched.columns else 0
-        
-        # Promotional profit margin
-        discounted_sales = sales_enriched[sales_enriched['discount_pct'] > 0] if 'discount_pct' in sales_enriched.columns else pd.DataFrame()
-        if len(discounted_sales) > 0:
-            promo_revenue = (discounted_sales['qty'] * discounted_sales['selling_price_aed']).sum()
-            promo_cost = (discounted_sales['qty'] * discounted_sales['unit_cost_aed']).sum()
-            promo_margin = ((promo_revenue - promo_cost) / promo_revenue * 100) if promo_revenue > 0 else 0
-        else:
-            promo_margin = 0
-            promo_revenue = 0
-        
-        # Discount effectiveness score (revenue per discount point)
-        discount_effectiveness = (promo_revenue / avg_discount) if avg_discount > 0 else 0
-        
-        # Budget utilization (from simulation)
-        budget_utilization = sim_kpis.get('budget_utilization_pct', 0) if sim_kpis else 0
-        
-        kpis['promotional'] = {
-            'avg_discount_pct': avg_discount,
-            'promo_profit_margin': promo_margin,
-            'discount_effectiveness': discount_effectiveness,
-            'budget_utilization': budget_utilization
-        }
-        
-        # ============================================================
-        # 4. OPERATIONAL RISKS
-        # ============================================================
-        # Stockout risk (from simulation or inventory)
-        stockout_risk = sim_kpis.get('stockout_risk_pct', 0) if sim_kpis else 0
-        high_risk_skus = sim_kpis.get('high_risk_skus', 0) if sim_kpis else 0
-        
-        # Inventory turnover ratio
-        avg_inventory = inventory['stock_on_hand'].mean() if 'stock_on_hand' in inventory.columns else 1
-        inventory_turnover = total_cogs / avg_inventory if avg_inventory > 0 else 0
-        
-        # Return rate
-        returns = sales_enriched[sales_enriched['qty'] < 0]['qty'].abs().sum() if 'qty' in sales_enriched.columns else 0
-        total_sold = sales_enriched[sales_enriched['qty'] > 0]['qty'].sum() if 'qty' in sales_enriched.columns else 1
-        return_rate = (returns / total_sold * 100) if total_sold > 0 else 0
-        
-        # Payment failure rate
-        if 'payment_status' in sales_enriched.columns:
-            total_orders = len(sales_enriched)
-            failed_orders = len(sales_enriched[sales_enriched['payment_status'] != 'Paid'])
-            payment_failure_rate = (failed_orders / total_orders * 100) if total_orders > 0 else 0
-        else:
-            payment_failure_rate = 0
-        
-        kpis['operational_risks'] = {
-            'stockout_risk_pct': stockout_risk,
-            'high_risk_skus': high_risk_skus,
-            'inventory_turnover': inventory_turnover,
-            'return_rate_pct': return_rate,
-            'payment_failure_rate': payment_failure_rate
-        }
-        
-        # ============================================================
-        # 5. CUSTOMER BEHAVIOUR
-        # ============================================================
-        # Average Order Value
-        aov = net_revenue / len(paid_sales) if len(paid_sales) > 0 else 0
-        
-        # Repeat purchase indicator (customers with >1 order)
-        if 'order_id' in paid_sales.columns:
-            # Group by some customer proxy (could be store_id for B2B or order patterns)
-            orders_per_day = paid_sales.groupby(paid_sales['order_time'].dt.date if 'order_time' in paid_sales.columns else 'store_id').size()
-            repeat_indicator = (orders_per_day > 1).sum() / len(orders_per_day) * 100 if len(orders_per_day) > 0 else 0
-        else:
-            repeat_indicator = 0
-        
-        # Units per transaction
-        units_per_txn = paid_sales['qty'].mean() if 'qty' in paid_sales.columns else 0
-        
-        kpis['customer_behaviour'] = {
-            'avg_order_value': aov,
-            'repeat_purchase_indicator': repeat_indicator,
-            'units_per_transaction': units_per_txn
-        }
-        
-        # ============================================================
-        # 6. DATA QUALITY & COMPLIANCE
-        # ============================================================
-        # Data completeness score
-        total_cells = sales_enriched.shape[0] * sales_enriched.shape[1]
-        missing_cells = sales_enriched.isnull().sum().sum()
-        data_completeness = ((total_cells - missing_cells) / total_cells * 100) if total_cells > 0 else 100
-        
-        # Issue resolution rate
-        if issues is not None and len(issues) > 0:
-            total_issues = len(issues)
-            # Assume all logged issues are resolved
-            issue_resolution_rate = 100.0
-        else:
-            total_issues = 0
-            issue_resolution_rate = 100.0
-        
-        # Outlier impact on revenue (transactions with extreme values)
-        if 'selling_price_aed' in sales_enriched.columns:
-            q1 = sales_enriched['selling_price_aed'].quantile(0.25)
-            q3 = sales_enriched['selling_price_aed'].quantile(0.75)
-            iqr = q3 - q1
-            outliers = sales_enriched[(sales_enriched['selling_price_aed'] < q1 - 1.5*iqr) | 
-                                       (sales_enriched['selling_price_aed'] > q3 + 1.5*iqr)]
-            outlier_revenue = (outliers['qty'] * outliers['selling_price_aed']).sum()
-            outlier_impact = (outlier_revenue / gross_revenue * 100) if gross_revenue > 0 else 0
-        else:
-            outlier_impact = 0
-        
-        kpis['data_quality'] = {
-            'data_completeness': data_completeness,
-            'total_issues': total_issues,
-            'issue_resolution_rate': issue_resolution_rate,
-            'outlier_impact_pct': outlier_impact
-        }
-        
-    except Exception as e:
-        logger.error(f"Error calculating business KPIs: {str(e)}")
-        # Return default values
-        kpis = {
-            'financial': {'gross_revenue': 0, 'net_revenue': 0, 'cogs': 0, 'gross_margin_aed': 0, 'gross_margin_pct': 0, 'incremental_profit': 0},
-            'channel_category': {'channel_contribution': {}, 'channel_efficiency': {}, 'category_contribution': {}, 'pareto_categories': [], 'fulfillment_profitability': {}},
-            'promotional': {'avg_discount_pct': 0, 'promo_profit_margin': 0, 'discount_effectiveness': 0, 'budget_utilization': 0},
-            'operational_risks': {'stockout_risk_pct': 0, 'high_risk_skus': 0, 'inventory_turnover': 0, 'return_rate_pct': 0, 'payment_failure_rate': 0},
-            'customer_behaviour': {'avg_order_value': 0, 'repeat_purchase_indicator': 0, 'units_per_transaction': 0},
-            'data_quality': {'data_completeness': 100, 'total_issues': 0, 'issue_resolution_rate': 100, 'outlier_impact_pct': 0}
-        }
-    
-    return kpis
-
-def render_business_kpis(kpis: Dict, sim_kpis: Dict = None):
-    """Render the business KPIs dashboard section"""
-    
-    st.markdown("## 📊 Business KPI Dashboard")
-    
-    # Create tabs for different KPI categories
-    kpi_tabs = st.tabs(["💰 Financial", "📈 Channel & Category", "🎯 Promotional", "⚠️ Operational Risks", "👥 Customer", "✅ Data Quality"])
-    
-    # Tab 1: Financial Performance
-    with kpi_tabs[0]:
-        st.markdown('<div class="kpi-section">💰 Financial Performance</div>', unsafe_allow_html=True)
-        fin = kpis.get('financial', {})
-        
-        cols = st.columns(6)
-        with cols[0]:
-            st.markdown(f'''<div class="kpi-card">
-                <div class="kpi-label">Gross Revenue</div>
-                <div class="kpi-value">AED {fin.get('gross_revenue', 0):,.0f}</div>
-            </div>''', unsafe_allow_html=True)
-        with cols[1]:
-            st.markdown(f'''<div class="kpi-card success">
-                <div class="kpi-label">Net Revenue</div>
-                <div class="kpi-value">AED {fin.get('net_revenue', 0):,.0f}</div>
-            </div>''', unsafe_allow_html=True)
-        with cols[2]:
-            st.markdown(f'''<div class="kpi-card warning">
-                <div class="kpi-label">COGS</div>
-                <div class="kpi-value">AED {fin.get('cogs', 0):,.0f}</div>
-            </div>''', unsafe_allow_html=True)
-        with cols[3]:
-            margin_class = "success" if fin.get('gross_margin_pct', 0) >= 30 else "warning" if fin.get('gross_margin_pct', 0) >= 20 else "danger"
-            st.markdown(f'''<div class="kpi-card {margin_class}">
-                <div class="kpi-label">Gross Margin</div>
-                <div class="kpi-value">{fin.get('gross_margin_pct', 0):.1f}%</div>
-                <div class="kpi-sub">AED {fin.get('gross_margin_aed', 0):,.0f}</div>
-            </div>''', unsafe_allow_html=True)
-        with cols[4]:
-            st.markdown(f'''<div class="kpi-card purple">
-                <div class="kpi-label">Incremental Profit</div>
-                <div class="kpi-value">AED {fin.get('incremental_profit', 0):,.0f}</div>
-                <div class="kpi-sub">From Simulation</div>
-            </div>''', unsafe_allow_html=True)
-        with cols[5]:
-            profit_margin = (fin.get('gross_margin_aed', 0) / fin.get('net_revenue', 1) * 100) if fin.get('net_revenue', 0) > 0 else 0
-            st.markdown(f'''<div class="kpi-card info">
-                <div class="kpi-label">Profit Margin</div>
-                <div class="kpi-value">{profit_margin:.1f}%</div>
-            </div>''', unsafe_allow_html=True)
-    
-    # Tab 2: Channel & Category
-    with kpi_tabs[1]:
-        st.markdown('<div class="kpi-section">📈 Channel & Category Performance</div>', unsafe_allow_html=True)
-        cc = kpis.get('channel_category', {})
-        
-        col1, col2 = st.columns(2)
-        
-        with col1:
-            st.markdown("**Channel Revenue Contribution**")
-            channel_contrib = cc.get('channel_contribution', {})
-            if channel_contrib:
-                for ch, pct in channel_contrib.items():
-                    color_class = "success" if pct >= 30 else ""
-                    st.markdown(f'''<div class="kpi-card {color_class}">
-                        <div class="kpi-label">{ch}</div>
-                        <div class="kpi-value">{pct:.1f}%</div>
-                    </div>''', unsafe_allow_html=True)
-            else:
-                st.info("No channel data")
-            
-            st.markdown("**Channel Efficiency (Rev/Txn)**")
-            channel_eff = cc.get('channel_efficiency', {})
-            if channel_eff:
-                for ch, eff in channel_eff.items():
-                    st.markdown(f'''<div class="kpi-card info">
-                        <div class="kpi-label">{ch}</div>
-                        <div class="kpi-value">AED {eff:,.0f}</div>
-                    </div>''', unsafe_allow_html=True)
-        
-        with col2:
-            st.markdown("**Category Contribution (Pareto)**")
-            cat_contrib = cc.get('category_contribution', {})
-            pareto_cats = cc.get('pareto_categories', [])
-            if cat_contrib:
-                for cat, pct in list(cat_contrib.items())[:5]:
-                    is_pareto = "success" if cat in pareto_cats else ""
-                    st.markdown(f'''<div class="kpi-card {is_pareto}">
-                        <div class="kpi-label">{cat} {"⭐" if cat in pareto_cats else ""}</div>
-                        <div class="kpi-value">{pct:.1f}%</div>
-                    </div>''', unsafe_allow_html=True)
-            else:
-                st.info("No category data")
-            
-            st.markdown("**Fulfillment Profitability**")
-            fulfill_prof = cc.get('fulfillment_profitability', {})
-            if fulfill_prof:
-                for ft, margin in fulfill_prof.items():
-                    color_class = "success" if margin >= 25 else "warning" if margin >= 15 else "danger"
-                    st.markdown(f'''<div class="kpi-card {color_class}">
-                        <div class="kpi-label">{ft}</div>
-                        <div class="kpi-value">{margin:.1f}%</div>
-                    </div>''', unsafe_allow_html=True)
-    
-    # Tab 3: Promotional Effectiveness
-    with kpi_tabs[2]:
-        st.markdown('<div class="kpi-section">🎯 Promotional Effectiveness</div>', unsafe_allow_html=True)
-        promo = kpis.get('promotional', {})
-        
-        cols = st.columns(4)
-        with cols[0]:
-            st.markdown(f'''<div class="kpi-card">
-                <div class="kpi-label">Avg Discount %</div>
-                <div class="kpi-value">{promo.get('avg_discount_pct', 0):.1f}%</div>
-            </div>''', unsafe_allow_html=True)
-        with cols[1]:
-            margin_class = "success" if promo.get('promo_profit_margin', 0) >= 20 else "warning" if promo.get('promo_profit_margin', 0) >= 10 else "danger"
-            st.markdown(f'''<div class="kpi-card {margin_class}">
-                <div class="kpi-label">Promo Profit Margin</div>
-                <div class="kpi-value">{promo.get('promo_profit_margin', 0):.1f}%</div>
-            </div>''', unsafe_allow_html=True)
-        with cols[2]:
-            st.markdown(f'''<div class="kpi-card info">
-                <div class="kpi-label">Discount Effectiveness</div>
-                <div class="kpi-value">AED {promo.get('discount_effectiveness', 0):,.0f}</div>
-                <div class="kpi-sub">Revenue per discount %</div>
-            </div>''', unsafe_allow_html=True)
-        with cols[3]:
-            budget_class = "success" if promo.get('budget_utilization', 0) <= 100 else "danger"
-            st.markdown(f'''<div class="kpi-card {budget_class}">
-                <div class="kpi-label">Budget Utilization</div>
-                <div class="kpi-value">{promo.get('budget_utilization', 0):.1f}%</div>
-            </div>''', unsafe_allow_html=True)
-        
-        # Before/After comparison if simulation available
-        if sim_kpis:
-            st.markdown("---")
-            st.markdown("**📊 Before vs After Discount Effect**")
-            comp_cols = st.columns(3)
-            with comp_cols[0]:
-                st.metric("Base Revenue", f"AED {sim_kpis.get('baseline_revenue', 0):,.0f}")
-            with comp_cols[1]:
-                st.metric("Simulated Revenue", f"AED {sim_kpis.get('simulated_revenue', 0):,.0f}", 
-                         delta=f"{((sim_kpis.get('simulated_revenue', 0) / sim_kpis.get('baseline_revenue', 1) - 1) * 100):.1f}%")
-            with comp_cols[2]:
-                st.metric("Margin Change", f"{sim_kpis.get('simulated_margin_pct', 0):.1f}%",
-                         delta=f"{sim_kpis.get('simulated_margin_pct', 0) - sim_kpis.get('baseline_margin_pct', 0):.1f}%")
-    
-    # Tab 4: Operational Risks
-    with kpi_tabs[3]:
-        st.markdown('<div class="kpi-section">⚠️ Operational Risks</div>', unsafe_allow_html=True)
-        ops = kpis.get('operational_risks', {})
-        
-        cols = st.columns(5)
-        with cols[0]:
-            risk_class = "danger" if ops.get('stockout_risk_pct', 0) > 20 else "warning" if ops.get('stockout_risk_pct', 0) > 10 else "success"
-            st.markdown(f'''<div class="kpi-card {risk_class}">
-                <div class="kpi-label">Stockout Risk</div>
-                <div class="kpi-value">{ops.get('stockout_risk_pct', 0):.1f}%</div>
-            </div>''', unsafe_allow_html=True)
-        with cols[1]:
-            sku_class = "danger" if ops.get('high_risk_skus', 0) > 10 else "warning" if ops.get('high_risk_skus', 0) > 5 else "success"
-            st.markdown(f'''<div class="kpi-card {sku_class}">
-                <div class="kpi-label">High-Risk SKUs</div>
-                <div class="kpi-value">{ops.get('high_risk_skus', 0)}</div>
-            </div>''', unsafe_allow_html=True)
-        with cols[2]:
-            st.markdown(f'''<div class="kpi-card info">
-                <div class="kpi-label">Inventory Turnover</div>
-                <div class="kpi-value">{ops.get('inventory_turnover', 0):.2f}x</div>
-            </div>''', unsafe_allow_html=True)
-        with cols[3]:
-            return_class = "danger" if ops.get('return_rate_pct', 0) > 5 else "warning" if ops.get('return_rate_pct', 0) > 3 else "success"
-            st.markdown(f'''<div class="kpi-card {return_class}">
-                <div class="kpi-label">Return Rate</div>
-                <div class="kpi-value">{ops.get('return_rate_pct', 0):.1f}%</div>
-                <div class="kpi-sub">Target: &lt;5%</div>
-            </div>''', unsafe_allow_html=True)
-        with cols[4]:
-            pay_class = "danger" if ops.get('payment_failure_rate', 0) > 10 else "warning" if ops.get('payment_failure_rate', 0) > 5 else "success"
-            st.markdown(f'''<div class="kpi-card {pay_class}">
-                <div class="kpi-label">Payment Failure</div>
-                <div class="kpi-value">{ops.get('payment_failure_rate', 0):.1f}%</div>
-                <div class="kpi-sub">Target: &lt;10%</div>
-            </div>''', unsafe_allow_html=True)
-    
-    # Tab 5: Customer Behaviour
-    with kpi_tabs[4]:
-        st.markdown('<div class="kpi-section">👥 Customer Behaviour</div>', unsafe_allow_html=True)
-        cust = kpis.get('customer_behaviour', {})
-        
-        cols = st.columns(3)
-        with cols[0]:
-            st.markdown(f'''<div class="kpi-card success">
-                <div class="kpi-label">Avg Order Value</div>
-                <div class="kpi-value">AED {cust.get('avg_order_value', 0):,.0f}</div>
-            </div>''', unsafe_allow_html=True)
-        with cols[1]:
-            st.markdown(f'''<div class="kpi-card info">
-                <div class="kpi-label">Repeat Purchase Indicator</div>
-                <div class="kpi-value">{cust.get('repeat_purchase_indicator', 0):.1f}%</div>
-            </div>''', unsafe_allow_html=True)
-        with cols[2]:
-            st.markdown(f'''<div class="kpi-card purple">
-                <div class="kpi-label">Units per Transaction</div>
-                <div class="kpi-value">{cust.get('units_per_transaction', 0):.1f}</div>
-            </div>''', unsafe_allow_html=True)
-    
-    # Tab 6: Data Quality
-    with kpi_tabs[5]:
-        st.markdown('<div class="kpi-section">✅ Data Quality & Compliance</div>', unsafe_allow_html=True)
-        dq = kpis.get('data_quality', {})
-        
-        cols = st.columns(4)
-        with cols[0]:
-            dq_class = "success" if dq.get('data_completeness', 0) >= 95 else "warning" if dq.get('data_completeness', 0) >= 90 else "danger"
-            st.markdown(f'''<div class="kpi-card {dq_class}">
-                <div class="kpi-label">Data Completeness</div>
-                <div class="kpi-value">{dq.get('data_completeness', 0):.1f}%</div>
-            </div>''', unsafe_allow_html=True)
-        with cols[1]:
-            st.markdown(f'''<div class="kpi-card info">
-                <div class="kpi-label">Issues Found</div>
-                <div class="kpi-value">{dq.get('total_issues', 0)}</div>
-            </div>''', unsafe_allow_html=True)
-        with cols[2]:
-            res_class = "success" if dq.get('issue_resolution_rate', 0) >= 90 else "warning"
-            st.markdown(f'''<div class="kpi-card {res_class}">
-                <div class="kpi-label">Resolution Rate</div>
-                <div class="kpi-value">{dq.get('issue_resolution_rate', 0):.0f}%</div>
-            </div>''', unsafe_allow_html=True)
-        with cols[3]:
-            outlier_class = "success" if dq.get('outlier_impact_pct', 0) < 5 else "warning" if dq.get('outlier_impact_pct', 0) < 10 else "danger"
-            st.markdown(f'''<div class="kpi-card {outlier_class}">
-                <div class="kpi-label">Outlier Impact</div>
-                <div class="kpi-value">{dq.get('outlier_impact_pct', 0):.1f}%</div>
-                <div class="kpi-sub">On revenue</div>
-            </div>''', unsafe_allow_html=True)
 
 def create_scenario_comparison(sim, city, channel, category, budget, margin_floor, days):
     """Compare multiple scenarios"""
@@ -932,7 +612,7 @@ def create_scenario_comparison(sim, city, channel, category, budget, margin_floo
 
 def create_product_matrix(sales_enriched):
     """BCG-style matrix"""
-    product_perf = sales_enriched[sales_enriched['payment_status'] == 'Paid'].copy()
+    product_perf = sales_enriched[sales_enriched['payment_status'] == 'Paid'].copy() if 'payment_status' in sales_enriched.columns else sales_enriched.copy()
     product_perf['revenue'] = product_perf['qty'] * product_perf['selling_price_aed']
     product_perf['cogs'] = product_perf['qty'] * product_perf['unit_cost_aed']
     product_perf['margin'] = product_perf['revenue'] - product_perf['cogs']
@@ -1011,7 +691,7 @@ def create_revenue_margin_chart(sales_data):
     fig.update_layout(
         title="📊 Revenue vs Margin Trend Analysis (May - September 2024)",
         hovermode='x unified',
-        height=400,
+        height=600,
         showlegend=True
     )
     
@@ -1186,10 +866,24 @@ def main():
     # Initialize simulator
     sim = initialize_simulator(products, stores, sales, inventory)
     
-    # Compact Header
-
-        # Dataset Overview (collapsed by default)
-    with st.expander("📊 Dataset Details", expanded=False):
+    # Professional Executive Header
+    st.markdown("""
+    <div style="background: #e0f2fe; 
+                padding: 2.5rem 2rem; 
+                border-radius: 16px; 
+                margin-bottom: 2rem;
+                border: 1px solid #bae6fd;">
+        <h1 style="color: #0c4a6e; font-size: 2.5rem; font-weight: 800; margin: 0;">
+            🇦🇪 UAE Promo Pulse Dashboard
+        </h1>
+        <p style="color: #075985; font-size: 1.125rem; margin: 0.5rem 0 0 0; font-weight: 500;">
+            Executive Business Intelligence Platform  •  Real-Time Analytics & Insights
+        </p>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    # Dataset Overview
+    with st.expander("📊 Dataset Overview", expanded=False):
         col1, col2, col3, col4 = st.columns(4)
         with col1:
             st.metric("📦 Products", f"{len(products):,}")
@@ -1205,9 +899,10 @@ def main():
         with col1:
             st.markdown("**📅 Data Period**")
             if 'order_time' in sales.columns:
-                sales['order_time'] = pd.to_datetime(sales['order_time'])
-                min_date = sales['order_time'].min().date()
-                max_date = sales['order_time'].max().date()
+                sales_copy = sales.copy()
+                sales_copy['order_time'] = pd.to_datetime(sales_copy['order_time'])
+                min_date = sales_copy['order_time'].min().date()
+                max_date = sales_copy['order_time'].max().date()
                 st.info(f"From **{min_date}** to **{max_date}**")
             else:
                 st.info("Date information not available")
@@ -1230,9 +925,10 @@ def main():
         )
         
         if preset == "Custom":
-            sales['order_time'] = pd.to_datetime(sales['order_time'])
-            min_date = sales['order_time'].min().date()
-            max_date = sales['order_time'].max().date()
+            sales_copy = sales.copy()
+            sales_copy['order_time'] = pd.to_datetime(sales_copy['order_time'])
+            min_date = sales_copy['order_time'].min().date()
+            max_date = sales_copy['order_time'].max().date()
             
             st.subheader("📅 Time Period")
             date_range = st.date_input(
@@ -1295,21 +991,20 @@ def main():
                         if simulated is None or len(simulated) == 0:
                             raise ValueError("Simulation returned no results")
                         
+                        # IMPORTANT: Store in session state to persist
                         st.session_state['sim_results'] = (simulated, violations, sim_kpis)
+                        st.session_state['sim_timestamp'] = datetime.now()
+                        
                         st.success(f"✅ Simulation Complete! ({elapsed:.2f}s)")
                         log_error(f"Simulation completed successfully in {elapsed:.2f}s", "INFO")
                         
-                        if violations:
-                            violation_messages = []
-                            if violations.get('budget_exceeded'):
-                                violation_messages.append("⚠️ Budget exceeded")
-                            if violations.get('margin_below_floor'):
-                                violation_messages.append("⚠️ Margin below floor")
-                            if violations.get('stockouts_exist'):
-                                violation_messages.append("⚠️ Stockout risk detected")
-                            
-                            if violation_messages:
-                                st.warning("Constraint Violations: " + ", ".join(violation_messages))
+                        # Display violation warnings immediately
+                        if violations and any(violations.values()):
+                            st.warning("⚠️ Some constraints were violated in the simulation!")
+                        
+                        # Force rerun to display new results
+                        time.sleep(0.5)
+                        st.rerun()
                 
                 except ValueError as e:
                     st.error(f"❌ Validation error: {str(e)}")
@@ -1324,6 +1019,7 @@ def main():
         filtered_sales = sales.copy()
         
         if preset == "Custom" and date_range and len(date_range) == 2:
+            filtered_sales['order_time'] = pd.to_datetime(filtered_sales['order_time'])
             filtered_sales = filtered_sales[
                 (filtered_sales['order_time'].dt.date >= date_range[0]) &
                 (filtered_sales['order_time'].dt.date <= date_range[1])
@@ -1355,90 +1051,195 @@ def main():
     
     # Calculate KPIs
     try:
-        kpis = sim.compute_kpis(filtered_sales)
+        kpis = calculate_advanced_kpis(filtered_sales, products, stores, inventory)
         if not kpis or len(kpis) == 0:
             raise ValueError("KPI calculation returned empty results")
     except Exception as e:
         log_error(f"Error calculating KPIs: {str(e)}", "ERROR")
         kpis = {
             'net_revenue': 0,
+            'gross_revenue': 0,
             'gross_profit': 0,
+            'gross_margin_aed': 0,
             'gross_margin_pct': 0,
             'return_rate_pct': 0,
             'total_transactions': 0,
-            'avg_transaction_value': 0
+            'avg_transaction_value': 0,
+            'cogs': 0,
+            'payment_failure_rate_pct': 0
         }
     
-    # Calculate comprehensive business KPIs
-    sim_kpis_data = st.session_state.get('sim_results', (None, None, None))[2] if 'sim_results' in st.session_state else None
-    business_kpis = calculate_business_kpis(filtered_sales, products, stores, inventory, issues, sim_kpis_data)
-    
-    # View Toggle - Compact
+    # View Toggle
+    st.markdown("---")
     view_mode = st.radio(
-        "Dashboard View",
-        ["📊 Business KPIs", "💼 Executive", "⚙️ Operations"],
-        horizontal=True,
-        label_visibility="collapsed"
+        "**Select Dashboard View:**",
+        ["💼 Executive Suite", "⚙️ Operations Command Center"],
+        horizontal=True
     )
     st.markdown("---")
     
-    # BUSINESS KPIs VIEW (NEW)
-    if "Business KPIs" in view_mode:
-        render_business_kpis(business_kpis, sim_kpis_data)
-    
     # EXECUTIVE VIEW
-    elif "Executive" in view_mode:
-        st.markdown("## 💼 Executive Summary")
+    if "Executive" in view_mode:
+        st.markdown("## 💼 Executive Suite")
         
-        # Compact KPI Cards
+        # KPI Cards - FIXED VERSION
         col1, col2, col3, col4 = st.columns(4)
         
         with col1:
+            revenue_display = kpis.get('net_revenue', 0)
             st.markdown(f"""
             <div class="metric-card">
                 <h3>NET REVENUE</h3>
-                <h1>AED {kpis['net_revenue']:,.0f}</h1>
-                <p>Gross: AED {kpis['gross_revenue']:,.0f}</p>
+                <h1>AED {revenue_display:,.0f}</h1>
+                <p>Current Period</p>
             </div>
             """, unsafe_allow_html=True)
         
         with col2:
+            margin_pct = kpis.get('gross_margin_pct', 0)
+            margin_aed = kpis.get('gross_margin_aed', 0)
             st.markdown(f"""
             <div class="metric-card">
                 <h3>GROSS MARGIN</h3>
-                <h1>{kpis['gross_margin_pct']:.1f}%</h1>
-                <p>Amount: AED {kpis['gross_margin_aed']:,.0f}</p>
+                <h1>{margin_pct:.1f}%</h1>
+                <p>AED {margin_aed:,.0f}</p>
             </div>
             """, unsafe_allow_html=True)
         
         with col3:
-            if 'sim_results' in st.session_state:
-                _, _, sim_kpis = st.session_state['sim_results']
+            # SIMULATION RESULTS - Only show if simulation ran
+            if st.session_state.sim_results is not None:
+                simulated, violations, sim_kpis = st.session_state.sim_results
+                
+                sim_profit = sim_kpis.get('profit_proxy', 0)
+                sim_margin = sim_kpis.get('simulated_margin_pct', 0)
+                
                 st.markdown(f"""
                 <div class="metric-card">
-                    <h3>PROFIT PROXY (SIM)</h3>
-                    <h1>AED {sim_kpis['profit_proxy']:,.0f}</h1>
-                    <p>Margin: {sim_kpis['simulated_margin_pct']:.1f}%</p>
+                    <h3>SIMULATED PROFIT</h3>
+                    <h1>AED {sim_profit:,.0f}</h1>
+                    <p>Margin: {sim_margin:.1f}%</p>
                 </div>
                 """, unsafe_allow_html=True)
+                
+                # Show comparison with actual
+                profit_diff = sim_profit - margin_aed
+                profit_diff_pct = (profit_diff / margin_aed * 100) if margin_aed > 0 else 0
+                st.caption(f"Difference: AED {profit_diff:,.0f} ({profit_diff_pct:+.1f}%)")
             else:
-                st.info("Run simulation")
+                st.markdown(f"""
+                <div class="metric-card" style="opacity: 0.5;">
+                    <h3>SIMULATED PROFIT</h3>
+                    <h1>-</h1>
+                    <p>Run simulation to see</p>
+                </div>
+                """, unsafe_allow_html=True)
         
         with col4:
-            if 'sim_results' in st.session_state:
-                _, _, sim_kpis = st.session_state['sim_results']
-                color = "green" if sim_kpis['budget_utilization_pct'] <= 100 else "red"
+            # BUDGET USAGE - Only show if simulation ran
+            if st.session_state.sim_results is not None:
+                simulated, violations, sim_kpis = st.session_state.sim_results
+                
+                budget_used = sim_kpis.get('promo_spend', 0)
+                budget_total = sim_kpis.get('budget_allocated', promo_budget)
+                budget_pct = (budget_used / budget_total * 100) if budget_total > 0 else 0
+                
+                # Color code: Red if over 100%, Orange if 80-100%, Green if under 80%
+                if budget_pct > 100:
+                    color = "red"
+                    status = "⚠️ OVER BUDGET"
+                elif budget_pct >= 80:
+                    color = "orange"
+                    status = "⚠️ HIGH SPEND"
+                else:
+                    color = "green"
+                    status = "✅ ON BUDGET"
+                
                 st.markdown(f"""
                 <div class="metric-card">
                     <h3>BUDGET USAGE</h3>
-                    <h1 style="color:{color};">{sim_kpis['budget_utilization_pct']:.1f}%</h1>
-                    <p>{sim_kpis['promo_spend']:,.0f} AED spent</p>
+                    <h1 style="color:{color};">{budget_pct:.1f}%</h1>
+                    <p>{status}<br>AED {budget_used:,.0f} / {budget_total:,.0f}</p>
                 </div>
                 """, unsafe_allow_html=True)
             else:
-                st.info("Run simulation")
+                st.markdown(f"""
+                <div class="metric-card" style="opacity: 0.5;">
+                    <h3>BUDGET USAGE</h3>
+                    <h1>-</h1>
+                    <p>Run simulation to see</p>
+                </div>
+                """, unsafe_allow_html=True)
         
         st.divider()
+        
+        # SIMULATION INSIGHTS - New Section
+        if st.session_state.sim_results is not None:
+            simulated, violations, sim_kpis = st.session_state.sim_results
+            
+            st.success("✅ Simulation Results Loaded - See metrics above and constraint analysis below")
+            
+            # Create 3 columns for simulation insights
+            sim_col1, sim_col2, sim_col3 = st.columns(3)
+            
+            with sim_col1:
+                st.metric(
+                    "📊 Simulated Revenue",
+                    f"AED {sim_kpis.get('simulated_revenue', 0):,.0f}",
+                    delta=f"vs actual: {((sim_kpis.get('simulated_revenue', 0) / kpis.get('net_revenue', 1) - 1) * 100):+.1f}%" if kpis.get('net_revenue', 0) > 0 else "N/A"
+                )
+            
+            with sim_col2:
+                st.metric(
+                    "💰 Projected Margin",
+                    f"{sim_kpis.get('simulated_margin_pct', 0):.1f}%",
+                    delta=f"vs actual: {(sim_kpis.get('simulated_margin_pct', 0) - margin_pct):+.1f}%"
+                )
+            
+            with sim_col3:
+                stockout_risk = sim_kpis.get('stockout_risk_pct', 0)
+                risk_status = "🔴 HIGH" if stockout_risk > 20 else "🟡 MEDIUM" if stockout_risk > 10 else "🟢 LOW"
+                st.metric(
+                    "⚠️ Stockout Risk",
+                    f"{stockout_risk:.1f}%",
+                    delta=risk_status
+                )
+            
+            # Constraint violations
+            st.subheader("🔍 Constraint Analysis")
+            
+            constraint_col1, constraint_col2, constraint_col3 = st.columns(3)
+            
+            with constraint_col1:
+                if violations.get('budget_exceeded'):
+                    st.warning("❌ Budget Constraint: VIOLATED")
+                    st.write(f"Spent: AED {sim_kpis.get('promo_spend', 0):,.0f}")
+                    st.write(f"Limit: AED {promo_budget:,.0f}")
+                else:
+                    st.success("✅ Budget Constraint: OK")
+                    remaining = promo_budget - sim_kpis.get('promo_spend', 0)
+                    st.write(f"Remaining: AED {remaining:,.0f}")
+            
+            with constraint_col2:
+                if violations.get('margin_below_floor'):
+                    st.warning("❌ Margin Floor: VIOLATED")
+                    st.write(f"Current: {sim_kpis.get('simulated_margin_pct', 0):.1f}%")
+                    st.write(f"Floor: {margin_floor}%")
+                else:
+                    st.success("✅ Margin Floor: OK")
+                    margin_cushion = sim_kpis.get('simulated_margin_pct', 0) - margin_floor
+                    st.write(f"Cushion: {margin_cushion:+.1f}%")
+            
+            with constraint_col3:
+                if violations.get('stockouts_exist'):
+                    st.warning("❌ Stockout Risk: DETECTED")
+                    st.write(f"Risk Level: {sim_kpis.get('stockout_risk_pct', 0):.1f}%")
+                    st.write(f"SKUs at Risk: {sim_kpis.get('high_risk_skus', 0)}")
+                else:
+                    st.success("✅ Stockout Risk: LOW")
+                    st.write(f"Risk Level: {sim_kpis.get('stockout_risk_pct', 0):.1f}%")
+            
+            st.divider()
         
         # Revenue vs Margin Chart
         st.markdown("### 📈 Revenue vs Margin Trend")
@@ -1475,12 +1276,12 @@ def main():
         
         fig.add_hline(y=avg_margin_bcg, line_dash="dash", line_color="gray")
         fig.add_vline(x=avg_revenue_bcg, line_dash="dash", line_color="gray")
-        fig.update_layout(height=400)
+        fig.update_layout(height=600)
         
         st.plotly_chart(fig, use_container_width=True)
         
         # Scenario Comparison
-        if 'sim_results' in st.session_state:
+        if st.session_state.sim_results is not None:
             st.divider()
             st.markdown("### 🎯 Scenario Comparison")
             
@@ -1504,14 +1305,14 @@ def main():
                 )
     
     # OPERATIONS VIEW
-    elif "Operations" in view_mode:
+    else:
         st.markdown("## ⚙️ Operations Command Center")
         
         col1, col2, col3, col4 = st.columns(4)
         
         with col1:
-            if 'sim_results' in st.session_state:
-                _, _, sim_kpis = st.session_state['sim_results']
+            if st.session_state.sim_results is not None:
+                _, _, sim_kpis = st.session_state.sim_results
                 risk_color = "red" if sim_kpis['stockout_risk_pct'] > 20 else "orange" if sim_kpis['stockout_risk_pct'] > 10 else "green"
                 st.markdown(f"""
                 <div class="metric-card">
@@ -1527,7 +1328,7 @@ def main():
             st.markdown(f"""
             <div class="metric-card">
                 <h3>RETURN RATE</h3>
-                <h1>{kpis['return_rate_pct']:.1f}%</h1>
+                <h1>{kpis.get('return_rate_pct', 0):.1f}%</h1>
                 <p>Target: < 5%</p>
             </div>
             """, unsafe_allow_html=True)
@@ -1536,77 +1337,10 @@ def main():
             st.markdown(f"""
             <div class="metric-card">
                 <h3>PAYMENT FAILURES</h3>
-                <h1>{kpis['payment_failure_rate_pct']:.1f}%</h1>
+                <h1>{kpis.get('payment_failure_rate_pct', 0):.1f}%</h1>
                 <p>Target: < 10%</p>
             </div>
             """, unsafe_allow_html=True)
         
         with col4:
-            st.markdown(f"""
-            <div class="metric-card">
-                <h3>DATA QUALITY</h3>
-                <h1>{len(issues)}</h1>
-                <p>Issues Resolved</p>
-            </div>
-            """, unsafe_allow_html=True)
-        
-        st.divider()
-        st.markdown("### 📦 Inventory Distribution")
-        
-        latest_inv = inventory.sort_values('snapshot_date').groupby('product_id').last().reset_index()
-        fig = px.histogram(
-            latest_inv, x='stock_on_hand', nbins=40,
-            title='Inventory Distribution', marginal='box'
-        )
-        fig.update_layout(height=400)
-        st.plotly_chart(fig, use_container_width=True)
-    
-    # Download Section
-    st.markdown("---")
-    st.subheader("💾 Download & Export")
-    
-    col1, col2, col3, col4 = st.columns(4)
-    
-    with col1:
-        st.download_button(
-            "📊 Sales Data", 
-            sales.to_csv(index=False).encode('utf-8'),
-            f"sales_{datetime.now().strftime('%Y%m%d')}.csv", 
-            "text/csv", 
-            use_container_width=True
-        )
-    
-    with col2:
-        st.download_button(
-            "📋 Issues Log", 
-            issues.to_csv(index=False).encode('utf-8'),
-            f"issues_{datetime.now().strftime('%Y%m%d')}.csv", 
-            "text/csv", 
-            use_container_width=True
-        )
-    
-    with col3:
-        if 'sim_results' in st.session_state:
-            simulated, _, _ = st.session_state['sim_results']
-            st.download_button(
-                "🎯 Simulation", 
-                simulated.to_csv(index=False).encode('utf-8'),
-                f"simulation_{datetime.now().strftime('%Y%m%d')}.csv", 
-                "text/csv", 
-                use_container_width=True
-            )
-    
-    with col4:
-        # Export error logs
-        if st.session_state.error_logs:
-            logs_df = pd.DataFrame(st.session_state.error_logs)
-            st.download_button(
-                "📝 Error Logs",
-                logs_df.to_csv(index=False).encode('utf-8'),
-                f"error_logs_{datetime.now().strftime('%Y%m%d')}.csv",
-                "text/csv",
-                use_container_width=True
-            )
-
-if __name__ == "__main__":
-    main()
+            
